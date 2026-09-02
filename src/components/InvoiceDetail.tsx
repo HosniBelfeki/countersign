@@ -14,7 +14,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export function InvoiceDetail({ invoiceId, onClose }: { invoiceId: string; onClose: () => void }) {
-  const { state } = useLedger();
+  const { state, dispatch } = useLedger();
   const invoice = invoiceById(state, invoiceId);
   const client = invoice ? clientById(state, invoice.clientId) : undefined;
 
@@ -72,6 +72,54 @@ export function InvoiceDetail({ invoiceId, onClose }: { invoiceId: string; onClo
             </>
           )}
         </dl>
+
+        {/*
+          The human's own hands on the ledger. These dispatch the SAME actions the
+          gated WebMCP tools dispatch, with actor: 'human' instead of 'agent' — so
+          the reducer's guards and the activity log treat both paths identically.
+          No confirmation dialog here on purpose: the dialog exists to put a human
+          in front of an AGENT's request, and the human clicking the button already
+          IS that human.
+        */}
+        {invoice.status !== 'paid' && (
+          <div className="mt-5 border-t border-outline-variant pt-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+              Your actions
+            </h3>
+            <div className="mt-2 flex gap-2">
+              {invoice.status === 'draft' && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    dispatch({ type: 'SEND_INVOICE', invoiceId: invoice.id, actor: 'human' })
+                  }
+                  className="focus-ring flex-1 rounded bg-primary px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Send invoice
+                </button>
+              )}
+              {invoice.status === 'sent' && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    dispatch({
+                      type: 'MARK_INVOICE_PAID',
+                      invoiceId: invoice.id,
+                      amountReceived: invoice.amount,
+                      actor: 'human',
+                    })
+                  }
+                  className="focus-ring flex-1 rounded bg-success px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Mark paid — {formatMoney(invoice.amount, invoice.currency)}
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-on-surface-variant">
+              You can act directly. Your agent has to ask first.
+            </p>
+          </div>
+        )}
 
         <div className="mt-6">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">

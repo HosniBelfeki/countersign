@@ -54,15 +54,16 @@ await document.modelContext.registerTool({
 
 Registration is wrapped in a hook (`useRegisterWebMCPTools`) that creates a fresh `AbortController` inside each effect run and only ever aborts its own registrations — required because the spec's `registerTool` **rejects with `InvalidStateError` on a duplicate tool name** rather than silently replacing it, so React StrictMode's double-invoke would break naive registration. Confirmation-gated tools (`send_invoice`, `mark_invoice_paid`) call an in-page `requestConfirmation()` broker that resolves on human approval, human decline, *or* the tool's own `AbortSignal` firing — so an aborted agent call can never leave a confirmation dialog hanging forever.
 
-No backend, no auth, no database: a single reducer (`state/reducer.ts`) is the only place ledger data mutates, persisted to `localStorage`. Every WebMCP tool dispatches through it, so a human clicking in the UI and an agent calling a tool go through identical, auditable logic.
+No backend, no auth, no database: a single reducer (`state/reducer.ts`) is the only place ledger data mutates, persisted to `localStorage`. Every WebMCP tool dispatches through it, and so do the human **Your actions** buttons in the invoice detail panel — the same `SEND_INVOICE` and `MARK_INVOICE_PAID` actions, carrying `actor: 'human'` instead of `'agent'`. Identical guards, identical activity log, attributed differently. The confirmation dialog deliberately does not appear on the human path: it exists to put a person in front of an *agent's* request, and the person clicking the button already is that person.
 
-## Tool reference (10 tools)
+## Tool reference (11 tools)
 
 | Tool | Kind | Annotations | What it does |
 |---|---|---|---|
 | `get_ledger_state` | read | `readOnlyHint` | Board snapshot: counts and totals per column, overdue count. |
 | `search_invoices` | read | `readOnlyHint` | Finds invoices by client, id, description, status, or overdue-only. |
 | `get_client` | read | `readOnlyHint` | Client profile and current outstanding balance. |
+| `read_client_replies` | read | `readOnlyHint`, `untrustedContentHint` | Returns logged client messages with their quarantine flags. |
 | `add_client` | write | `readOnlyHint: false` | Creates a new client record. |
 | `draft_invoice` | write | `readOnlyHint: false` | Creates an invoice in Draft status. Never sends it. |
 | `edit_invoice` | write | `readOnlyHint: false` | Updates a draft invoice. Locked once sent or paid. |
@@ -87,7 +88,7 @@ Runs at `http://localhost:5173`. `document.modelContext` is only available in se
 ## Testing WebMCP locally
 
 1. Open Chrome 149+, enable `chrome://flags/#enable-webmcp-testing`, relaunch.
-2. Open `http://localhost:5173` and check the header status pill — it should read **"WebMCP · 10 tools"**.
+2. Open `http://localhost:5173` and check the header status pill — it should read **"WebMCP · 11 tools"**.
 3. In DevTools console:
    ```js
    (await document.modelContext.getTools()).map(t => t.name)
