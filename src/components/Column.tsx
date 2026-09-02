@@ -34,7 +34,7 @@ export function Column({
   const currencyTotals = Object.entries(sumByCurrency(invoices));
 
   return (
-    <div className="flex min-w-[240px] flex-1 flex-col rounded-lg bg-surface-container-low p-3">
+    <div className="board-column flex min-w-[240px] flex-1 flex-col rounded-lg p-3">
       <div className="mb-3 border-b border-outline-variant px-1 pb-3">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-on-surface">
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT_CLASS[status]}`} aria-hidden="true" />

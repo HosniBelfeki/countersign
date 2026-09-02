@@ -1,12 +1,20 @@
 import { useState } from 'react';
+import type { RegistrationStatus } from '../webmcp/registerTools';
 import { useToolLog } from '../webmcp/useToolLog';
 import { SparkIcon } from './SparkIcon';
 
 type ToolCategory = 'read' | 'write' | 'gated';
 
-const READ_ONLY_TOOLS = new Set(['get_ledger_state', 'search_invoices', 'get_client']);
+const READ_ONLY_TOOLS = new Set([
+  'get_ledger_state',
+  'search_invoices',
+  'get_client',
+  'read_client_replies',
+]);
 const GATED_TOOLS = new Set(['send_invoice', 'mark_invoice_paid']);
-const UNTRUSTED_INPUT_TOOLS = new Set(['log_client_reply']);
+// Tools whose payload is third-party text — log_client_reply takes it in,
+// read_client_replies hands it back. Both carry untrustedContentHint.
+const UNTRUSTED_INPUT_TOOLS = new Set(['log_client_reply', 'read_client_replies']);
 
 function categoryOf(toolName: string): ToolCategory {
   if (READ_ONLY_TOOLS.has(toolName)) return 'read';
@@ -33,7 +41,7 @@ const CATEGORY_STYLE: Record<ToolCategory, { dot: string; text: string; label: s
  * glance, and carries the tool's real WebMCP annotations (untrustedContentHint)
  * as a visible tag rather than leaving that protocol-level detail invisible.
  */
-export function ToolConsole() {
+export function ToolConsole({ status }: { status: RegistrationStatus }) {
   const entries = useToolLog();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -66,9 +74,34 @@ export function ToolConsole() {
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-400/10">
               <SparkIcon className="h-4 w-4 text-indigo-300" />
             </span>
-            <p className="text-mono-label px-6 text-slate-400">
-              No tool calls yet. Ask your agent about this page.
-            </p>
+            {status.state === 'registered' ? (
+              <>
+                <p className="text-mono-label px-4 text-slate-300">
+                  {status.count} tools registered. Waiting for your agent.
+                </p>
+                <p className="px-4 text-[11px] leading-relaxed text-slate-500">
+                  Try asking it: &ldquo;What&rsquo;s on my billing desk right now?&rdquo;
+                </p>
+              </>
+            ) : status.state === 'error' ? (
+              <>
+                <p className="text-mono-label px-4 text-amber-300">Tool registration failed.</p>
+                <p className="px-4 text-[11px] leading-relaxed text-slate-500">{status.message}</p>
+              </>
+            ) : status.state === 'registering' ? (
+              <p className="text-mono-label px-4 text-slate-400">Registering tools&hellip;</p>
+            ) : (
+              <>
+                <p className="text-mono-label px-4 text-slate-300">WebMCP not detected.</p>
+                <p className="px-4 text-[11px] leading-relaxed text-slate-500">
+                  Open this page in ChatGPT&rsquo;s in-app browser, or in Chrome with{' '}
+                  <span className="text-mono-label text-slate-400">
+                    chrome://flags/#enable-webmcp-testing
+                  </span>{' '}
+                  enabled. You can still use the board yourself.
+                </p>
+              </>
+            )}
           </div>
         )}
 

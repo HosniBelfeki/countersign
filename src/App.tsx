@@ -33,8 +33,8 @@ function Desk() {
   const status = useRegisterWebMCPTools(tools);
 
   return (
-    <div className="flex h-screen flex-col bg-surface">
-      <header className="border-b border-outline-variant">
+    <div className="flex h-screen flex-col">
+      <header className="app-header sticky top-0 z-30 border-b border-outline-variant">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4">
           <div>
             <h1 className="text-headline-lg text-on-surface">Countersign</h1>
@@ -67,7 +67,7 @@ function Desk() {
         )}
         <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-l border-outline-variant">
           <ActivityFeed />
-          <ToolConsole />
+          <ToolConsole status={status} />
         </aside>
       </div>
 

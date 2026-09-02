@@ -46,7 +46,7 @@ export function InvoiceCard({
       tabIndex={0}
       onClick={onSelect}
       onKeyDown={onKeyDown}
-      className={`focus-ring group w-full cursor-pointer rounded-md border bg-surface-container-lowest p-4 text-left transition-colors hover:bg-surface-container-low ${
+      className={`focus-ring invoice-card group w-full cursor-pointer rounded-md border bg-surface-container-lowest p-4 text-left hover:bg-surface-container-low ${
         selected ? 'border-primary ring-2 ring-primary/30' : 'border-outline-variant hover:border-outline'
       } ${agentCreated ? 'border-l-4 border-l-agent' : ''}`}
     >

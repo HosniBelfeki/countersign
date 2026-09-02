@@ -46,10 +46,58 @@
   --shadow-modal: 0 4px 6px -4px rgba(16, 24, 32, 0.05), 0 10px 15px -3px rgba(16, 24, 32, 0.06);
 }
 
+/*
+ * The board is a lot of white cards on one plane, which reads flat on camera.
+ * Two very low-opacity radial tints — brand teal top-left, agent indigo
+ * top-right — give the surface depth and quietly restate the app's premise
+ * (human side / agent side) without adding a decorative element anyone has to
+ * explain. Fixed attachment so the tint belongs to the viewport, not the
+ * scrolling content.
+ */
 body {
-  background: var(--color-surface);
+  background-color: var(--color-surface);
+  background-image:
+    radial-gradient(70rem 40rem at 8% -10%, color-mix(in srgb, var(--color-primary) 7%, transparent), transparent 60%),
+    radial-gradient(60rem 35rem at 96% -6%, color-mix(in srgb, var(--color-agent) 6%, transparent), transparent 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--color-on-surface);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Frosted header: lets the tinted background read through instead of capping it with a hard white bar. */
+.app-header {
+  background: color-mix(in srgb, var(--color-surface-container-lowest) 72%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+}
+
+/* Columns sit as translucent glass on the tint rather than opaque grey slabs. */
+.board-column {
+  background: color-mix(in srgb, var(--color-surface-container-lowest) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 45%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+/* Cards lift on hover — motion is the cheapest way to make a static board feel live on video. */
+.invoice-card {
+  transition:
+    transform 140ms cubic-bezier(0.2, 0, 0.2, 1),
+    box-shadow 140ms cubic-bezier(0.2, 0, 0.2, 1),
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+.invoice-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-panel);
+}
+@media (prefers-reduced-motion: reduce) {
+  .invoice-card {
+    transition: background-color 140ms ease, border-color 140ms ease;
+  }
+  .invoice-card:hover {
+    transform: none;
+  }
 }
 
 /* Exact typographic scale from the design spec — used wherever hierarchy matters most. */
