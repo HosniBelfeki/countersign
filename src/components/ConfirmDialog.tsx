@@ -1,3 +1,4 @@
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import { useConfirmQueue } from '../webmcp/useConfirmQueue';
 import { resolveConfirmation } from '../webmcp/confirm';
 import { formatMoney } from '../lib/money';
@@ -8,8 +9,36 @@ export function ConfirmDialog() {
   const request = queue[0];
   if (!request) return null;
 
-  const decline = () => resolveConfirmation(request.id, { approved: false, reason: 'declined' });
-  const approve = () => resolveConfirmation(request.id, { approved: true, reason: 'approved' });
+  /**
+   * Approval requires a TRUSTED event.
+   *
+   * An agent that can call our tools can usually also script the page, and a
+   * scripted `approveButton.click()` would let it approve its own request —
+   * defeating the entire checkpoint. Synthetic clicks dispatched from page
+   * script carry `isTrusted === false`, so we refuse them.
+   *
+   * Being honest about the limit: this stops in-page script (content scripts,
+   * console, injected JS). It does NOT stop an agent driving the browser at the
+   * input layer (CDP / WebDriver), whose clicks are indistinguishable from a
+   * human's by design. Closing that gap needs a browser-mediated prompt the
+   * page can request but no page-level actor can synthesise — precisely the
+   * `requestUserInteraction()` primitive the WebMCP spec still lacks.
+   */
+  const guard =
+    (outcome: { approved: boolean; reason: 'approved' | 'declined' }) =>
+    (event: ReactMouseEvent<HTMLButtonElement>) => {
+      if (!event.isTrusted) {
+        console.warn(
+          '[countersign] Ignored an untrusted (script-dispatched) click on the confirmation dialog. ' +
+            'Approval requires a real user gesture.'
+        );
+        return;
+      }
+      resolveConfirmation(request.id, outcome);
+    };
+
+  const decline = guard({ approved: false, reason: 'declined' });
+  const approve = guard({ approved: true, reason: 'approved' });
   const isHeavy = request.tier === 'heavy';
 
   return (
